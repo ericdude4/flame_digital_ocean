@@ -6,7 +6,7 @@ defmodule FlameDigitalOcean do
   @behaviour FLAME.Backend
 
   require Logger
-  alias FlameDigitalOcean.{BackendState, Utils}
+  alias FlameDigitalOcean.{BackendState, HTTPClient, Utils}
 
   @impl FLAME.Backend
   def init(opts) do
@@ -19,10 +19,30 @@ defmodule FlameDigitalOcean do
   def remote_boot(%BackendState{parent_ref: parent_ref} = state) do
     {resp, req_connect_time} =
       Utils.with_elapsed_ms(fn ->
-        # TODO: Make a request to the DigitalOcean API to create a new machine
-
-        # Placeholder for actual API call
-        {nil, 0}
+        HTTPClient.post(
+          "#{state.config.host}/droplets",
+          %{
+            "name" => state.config.name,
+            "region" => state.config.region,
+            "size" => state.config.size,
+            "image" => state.config.image,
+            "ssh_keys" => state.config.ssh_keys,
+            "backups" => state.config.backups,
+            "backup_policy" => state.config.backup_policy,
+            "ipv6" => state.config.ipv6,
+            "monitoring" => state.config.monitoring,
+            "tags" => state.config.tags,
+            "user_data" => state.config.user_data,
+            "volumes" => state.config.volumes,
+            "vpc_uuid" => state.config.vpc_uuid,
+            "with_droplet_agent" => state.config.with_droplet_agent
+          },
+          [
+            {"Authorization", "Bearer #{state.config.api_token}"},
+            {"Content-Type", "application/json"}
+          ],
+          []
+        )
       end)
 
     Logger.info("#{inspect(__MODULE__)} #{inspect(node())} machine create #{req_connect_time}ms")
@@ -30,12 +50,8 @@ defmodule FlameDigitalOcean do
     remaining_connect_window = state.config.boot_timeout - req_connect_time
 
     case resp do
-      %{"instance_id" => instance_id, "private_ip" => ip} ->
-        new_state = %{
-          state
-          | runner_instance_id: instance_id,
-            runner_instance_ip: ip
-        }
+      {:ok, %{body: %{"droplet" => %{"id" => droplet_id}}}} ->
+        new_state = %{state | runner_instance_id: droplet_id}
 
         remote_terminator_pid =
           receive do
@@ -44,7 +60,7 @@ defmodule FlameDigitalOcean do
           after
             remaining_connect_window ->
               Logger.error(
-                "failed to connect to fly machine within #{state.config.boot_timeout}ms"
+                "failed to connect to digital ocean machine within #{state.config.boot_timeout}ms"
               )
 
               exit(:timeout)

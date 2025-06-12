@@ -12,7 +12,6 @@ defmodule FlameDigitalOcean.BackendState do
             parent_ref: nil,
             runner_env: nil,
             runner_instance_id: nil,
-            runner_instance_ip: nil,
             remote_terminator_pid: nil
 
   def new(opts, app_config) do

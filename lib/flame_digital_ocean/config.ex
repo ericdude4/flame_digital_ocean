@@ -6,6 +6,7 @@ defmodule FlameDigitalOcean.Config do
   require Logger
 
   @valid_opts [
+    :app,
     :name,
     :region,
     :size,
@@ -21,12 +22,15 @@ defmodule FlameDigitalOcean.Config do
     :vpc_uuid,
     :with_droplet_agent,
     :boot_timeout,
+    :env,
+    :api_token,
     :host,
     :terminator_sup
   ]
 
   @derive {Inspect,
            only: [
+             :app,
              :name,
              :region,
              :size,
@@ -44,7 +48,8 @@ defmodule FlameDigitalOcean.Config do
              :host
            ]}
 
-  defstruct name: nil,
+  defstruct app: nil,
+            name: nil,
             region: nil,
             size: nil,
             image: nil,
@@ -59,12 +64,15 @@ defmodule FlameDigitalOcean.Config do
             vpc_uuid: nil,
             with_droplet_agent: false,
             boot_timeout: nil,
+            env: %{},
+            api_token: nil,
             host: nil
 
   def new(opts, config) do
     default = %Config{
-      boot_timeout: 120_000,
-      host: "https://api.digitalocean.com/v2/"
+      app: System.get_env("RELEASE_NAME"),
+      boot_timeout: 1000,
+      host: "https://api.digitalocean.com/v2"
     }
 
     provided_opts =
