@@ -20,8 +20,20 @@ defmodule FlameDigitalOcean do
   end
 
   @impl FLAME.Backend
-  def remote_spawn_monitor(state, func) do
-    # TODO
+  def remote_spawn_monitor(%BackendState{} = state, term) do
+    case term do
+      func when is_function(func, 0) ->
+        {pid, ref} = Node.spawn_monitor(state.runner_node_name, func)
+        {:ok, {pid, ref}}
+
+      {mod, fun, args} when is_atom(mod) and is_atom(fun) and is_list(args) ->
+        {pid, ref} = Node.spawn_monitor(state.runner_node_name, mod, fun, args)
+        {:ok, {pid, ref}}
+
+      other ->
+        raise ArgumentError,
+              "expected a null arity function or {mod, func, args}. Got: #{inspect(other)}"
+    end
   end
 
   @impl FLAME.Backend
