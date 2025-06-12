@@ -5,9 +5,13 @@ defmodule FlameDigitalOcean do
 
   @behaviour FLAME.Backend
 
+  alias FlameDigitalOcean.BackendState
+
   @impl FLAME.Backend
   def init(opts) do
     # TODO
+    app_config = Application.get_env(:flame, __MODULE__) || []
+    {:ok, BackendState.new(opts, app_config)}
   end
 
   @impl FLAME.Backend
