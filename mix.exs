@@ -21,7 +21,9 @@ defmodule FlameDigitalOcean.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:flame, "~> 0.5.2"}
+      {:flame, "~> 0.5.2"},
+      {:httpoison, "~> 2.0"},
+      {:mox, "~> 1.0", only: :test}
     ]
   end
 end
