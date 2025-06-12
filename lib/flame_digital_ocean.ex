@@ -82,6 +82,6 @@ defmodule FlameDigitalOcean do
 
   @impl FLAME.Backend
   def system_shutdown() do
-    # TODO
+    System.stop()
   end
 end
