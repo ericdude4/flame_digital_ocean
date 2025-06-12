@@ -5,7 +5,8 @@ defmodule FlameDigitalOcean do
 
   @behaviour FLAME.Backend
 
-  alias FlameDigitalOcean.BackendState
+  require Logger
+  alias FlameDigitalOcean.{BackendState, Utils}
 
   @impl FLAME.Backend
   def init(opts) do
@@ -15,8 +16,51 @@ defmodule FlameDigitalOcean do
   end
 
   @impl FLAME.Backend
-  def remote_boot(state) do
-    # TODO
+  def remote_boot(%BackendState{parent_ref: parent_ref} = state) do
+    {resp, req_connect_time} =
+      Utils.with_elapsed_ms(fn ->
+        # TODO: Make a request to the DigitalOcean API to create a new machine
+
+        # Placeholder for actual API call
+        {nil, 0}
+      end)
+
+    Logger.info("#{inspect(__MODULE__)} #{inspect(node())} machine create #{req_connect_time}ms")
+
+    remaining_connect_window = state.config.boot_timeout - req_connect_time
+
+    case resp do
+      %{"instance_id" => instance_id, "private_ip" => ip} ->
+        new_state = %{
+          state
+          | runner_instance_id: instance_id,
+            runner_instance_ip: ip
+        }
+
+        remote_terminator_pid =
+          receive do
+            {^parent_ref, {:remote_up, remote_terminator_pid}} ->
+              remote_terminator_pid
+          after
+            remaining_connect_window ->
+              Logger.error(
+                "failed to connect to fly machine within #{state.config.boot_timeout}ms"
+              )
+
+              exit(:timeout)
+          end
+
+        new_state = %{
+          new_state
+          | remote_terminator_pid: remote_terminator_pid,
+            runner_node_name: node(remote_terminator_pid)
+        }
+
+        {:ok, remote_terminator_pid, new_state}
+
+      other ->
+        {:error, other}
+    end
   end
 
   @impl FLAME.Backend
