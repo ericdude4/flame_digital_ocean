@@ -19,30 +19,63 @@ defmodule FlameDigitalOcean do
   def remote_boot(%BackendState{parent_ref: parent_ref} = state) do
     {resp, req_connect_time} =
       Utils.with_elapsed_ms(fn ->
-        HTTPClient.post(
-          "#{state.config.host}/droplets",
-          %{
-            "name" => state.config.name,
-            "region" => state.config.region,
-            "size" => state.config.size,
-            "image" => state.config.image,
-            "ssh_keys" => state.config.ssh_keys,
-            "backups" => state.config.backups,
-            "backup_policy" => state.config.backup_policy,
-            "ipv6" => state.config.ipv6,
-            "monitoring" => state.config.monitoring,
-            "tags" => state.config.tags,
-            "user_data" => state.config.user_data,
-            "volumes" => state.config.volumes,
-            "vpc_uuid" => state.config.vpc_uuid,
-            "with_droplet_agent" => state.config.with_droplet_agent
-          },
+        url = "#{state.config.host}/droplets"
+
+        body =
           [
-            {"Authorization", "Bearer #{state.config.api_token}"},
-            {"Content-Type", "application/json"}
-          ],
-          []
-        )
+            {"name", state.config.name},
+            {"region", state.config.region},
+            {"size", state.config.size},
+            {"image", state.config.image},
+            {"ssh_keys", state.config.ssh_keys},
+            {"backups", state.config.backups},
+            {"backup_policy", state.config.backup_policy},
+            {"ipv6", state.config.ipv6},
+            {"monitoring", state.config.monitoring},
+            {"tags", state.config.tags},
+            {"user_data", state.config.user_data},
+            {"volumes", state.config.volumes},
+            {"vpc_uuid", state.config.vpc_uuid},
+            {"with_droplet_agent", state.config.with_droplet_agent}
+          ]
+          |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+          |> Map.new()
+          |> Jason.encode()
+
+        headers = [
+          {"Authorization", "Bearer #{state.config.api_key}"},
+          {"Content-Type", "application/json"}
+        ]
+
+        case HTTPClient.post(url, body, headers, []) do
+          {:ok, %{status_code: 202, body: body}} ->
+            resp = Jason.decode(body)
+
+            case resp do
+              {:ok, %{"droplet" => %{"id" => _droplet_id, "status" => "active"}}} ->
+                resp
+
+              {:ok, %{"droplet" => %{"id" => droplet_id, "status" => "new"}}} ->
+                # Poll the droplet status until it's active
+                Utils.poll(
+                  fn ->
+                    case HTTPClient.get("#{url}/#{droplet_id}", headers) do
+                      {:ok, %{status_code: 200, body: body}} ->
+                        case Jason.decode(body) do
+                          {:ok, %{"droplet" => %{"id" => ^droplet_id, "status" => "active"}}} =
+                              resp ->
+                            resp
+
+                          {:ok, %{"droplet" => %{"id" => ^droplet_id, "status" => status}}} ->
+                            {:error, "Droplet is not active yet, current status: #{status}"}
+                        end
+                    end
+                  end,
+                  interval: state.config.boot_poll_interval,
+                  timeout: state.config.boot_timeout
+                )
+            end
+        end
       end)
 
     Logger.info("#{inspect(__MODULE__)} #{inspect(node())} machine create #{req_connect_time}ms")
@@ -50,7 +83,7 @@ defmodule FlameDigitalOcean do
     remaining_connect_window = state.config.boot_timeout - req_connect_time
 
     case resp do
-      {:ok, %{body: %{"droplet" => %{"id" => droplet_id}}}} ->
+      {:ok, %{"droplet" => %{"id" => droplet_id}}} ->
         new_state = %{state | runner_instance_id: droplet_id}
 
         remote_terminator_pid =

@@ -23,6 +23,7 @@ defmodule FlameDigitalOcean.MixProject do
     [
       {:flame, "~> 0.5.2"},
       {:httpoison, "~> 2.0"},
+      {:jason, "~> 1.4"},
       {:mox, "~> 1.0", only: :test}
     ]
   end

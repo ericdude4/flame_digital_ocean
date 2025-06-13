@@ -4,7 +4,7 @@ defmodule FlameDigitalOcean.BackendState do
   require Logger
 
   alias __MODULE__
-  alias FlameDigitalOcean.Config
+  alias FlameDigitalOcean.{Config, Utils}
 
   defstruct config: nil,
             runner_node_base: nil,
@@ -19,7 +19,7 @@ defmodule FlameDigitalOcean.BackendState do
 
     Logger.info("Initialized FlameDigitalOcean with config #{inspect(config)}")
 
-    runner_node_base = "#{config.app}-flame-#{rand_id(20)}"
+    runner_node_base = "#{config.app}-flame-#{Utils.rand_id(20)}"
     parent_ref = make_ref()
 
     encoded_parent =
@@ -55,12 +55,5 @@ defmodule FlameDigitalOcean.BackendState do
         env
       end
     end)
-  end
-
-  defp rand_id(len) do
-    len
-    |> :crypto.strong_rand_bytes()
-    |> Base.encode16(case: :lower)
-    |> binary_part(0, len)
   end
 end

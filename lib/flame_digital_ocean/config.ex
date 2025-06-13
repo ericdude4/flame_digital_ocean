@@ -2,6 +2,7 @@ defmodule FlameDigitalOcean.Config do
   @moduledoc false
 
   alias __MODULE__
+  alias FlameDigitalOcean.Utils
 
   require Logger
 
@@ -22,8 +23,10 @@ defmodule FlameDigitalOcean.Config do
     :vpc_uuid,
     :with_droplet_agent,
     :boot_timeout,
+    :boot_poll_interval,
     :env,
-    :api_token,
+    :api_key,
+    :log,
     :host,
     :terminator_sup
   ]
@@ -45,6 +48,8 @@ defmodule FlameDigitalOcean.Config do
              :vpc_uuid,
              :with_droplet_agent,
              :boot_timeout,
+             :boot_poll_interval,
+             :log,
              :host
            ]}
 
@@ -64,14 +69,17 @@ defmodule FlameDigitalOcean.Config do
             vpc_uuid: nil,
             with_droplet_agent: false,
             boot_timeout: nil,
+            boot_poll_interval: 1_000,
             env: %{},
-            api_token: nil,
+            api_key: nil,
+            log: true,
             host: nil
 
   def new(opts, config) do
     default = %Config{
       app: System.get_env("RELEASE_NAME"),
-      boot_timeout: 1000,
+      name: "#{System.get_env("RELEASE_NAME")}-flame-runner-#{Utils.rand_id(20)}",
+      boot_timeout: 120_000,
       host: "https://api.digitalocean.com/v2"
     }
 
