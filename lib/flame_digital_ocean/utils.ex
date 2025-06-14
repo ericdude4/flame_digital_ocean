@@ -33,4 +33,39 @@ defmodule FlameDigitalOcean.Utils do
         end
     end
   end
+
+  def build_user_data(%FlameDigitalOcean.Config{} = config) do
+    """
+    #!/bin/bash
+
+    set -euo pipefail
+
+    # === 0. Config ===
+    ERLANG_COOKIE="#{config.erlang_cookie}"
+    NODE_NAME="remote@$(curl -s http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address)"
+    DISTRIBUTION_PORT=9100
+
+    export HOME="/root"
+
+    # === 4. Set Erlang cookie ===
+    echo "$ERLANG_COOKIE" > ~/.erlang.cookie
+    chmod 400 ~/.erlang.cookie
+    chown root:root ~/.erlang.cookie
+
+    # === 5. Open ports ===
+    ufw allow 22/tcp
+    ufw allow 4369/tcp
+    ufw allow $DISTRIBUTION_PORT/tcp
+    ufw --force enable
+
+    # === 6. Start IEx node in distributed mode ===
+    cat <<EOF > $HOME/start_flame_node.sh
+    #!/bin/bash
+    exec iex --name $NODE_NAME --cookie $ERLANG_COOKIE --erl "-kernel inet_dist_listen_min $DISTRIBUTION_PORT inet_dist_listen_max $DISTRIBUTION_PORT"
+    EOF
+
+    chmod +x /root/start_flame_node.sh
+    nohup /root/start_flame_node.sh > /root/flame_node.log 2>&1 &
+    """
+  end
 end
