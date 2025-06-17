@@ -26,9 +26,11 @@ defmodule FlameDigitalOcean.Config do
     :boot_poll_interval,
     :env,
     :api_key,
+    :erlang_cookie,
     :log,
     :host,
-    :terminator_sup
+    :terminator_sup,
+    :name_prefix
   ]
 
   @derive {Inspect,
@@ -50,7 +52,8 @@ defmodule FlameDigitalOcean.Config do
              :boot_timeout,
              :boot_poll_interval,
              :log,
-             :host
+             :host,
+             :name_prefix
            ]}
 
   defstruct app: nil,
@@ -73,12 +76,14 @@ defmodule FlameDigitalOcean.Config do
             env: %{},
             api_key: nil,
             log: true,
-            host: nil
+            host: nil,
+            erlang_cookie: nil,
+            name_prefix: nil
 
   def new(opts, config) do
     default = %Config{
       app: System.get_env("RELEASE_NAME"),
-      name: "#{System.get_env("RELEASE_NAME")}-flame-runner-#{Utils.rand_id(20)}",
+      name: "#{opts[:name_prefix]}-flame-runner-#{Utils.rand_id(20)}",
       boot_timeout: 120_000,
       host: "https://api.digitalocean.com/v2"
     }

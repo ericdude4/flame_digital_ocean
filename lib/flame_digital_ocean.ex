@@ -21,6 +21,8 @@ defmodule FlameDigitalOcean do
       Utils.with_elapsed_ms(fn ->
         url = "#{state.config.host}/droplets"
 
+        IO.puts(Utils.build_user_data(state.config))
+
         body =
           [
             {"name", state.config.name},
@@ -33,21 +35,24 @@ defmodule FlameDigitalOcean do
             {"ipv6", state.config.ipv6},
             {"monitoring", state.config.monitoring},
             {"tags", state.config.tags},
-            {"user_data", state.config.user_data},
+            {"user_data", Utils.build_user_data(state.config)},
             {"volumes", state.config.volumes},
             {"vpc_uuid", state.config.vpc_uuid},
             {"with_droplet_agent", state.config.with_droplet_agent}
           ]
           |> Enum.reject(fn {_key, value} -> is_nil(value) end)
           |> Map.new()
-          |> Jason.encode()
+          |> Jason.encode!()
 
         headers = [
           {"Authorization", "Bearer #{state.config.api_key}"},
           {"Content-Type", "application/json"}
         ]
 
-        case HTTPClient.post(url, body, headers, []) do
+        case HTTPClient.post(url, body, headers,
+               timeout: state.config.boot_timeout,
+               recv_timeout: state.config.boot_timeout
+             ) do
           {:ok, %{status_code: 202, body: body}} ->
             resp = Jason.decode(body)
 
