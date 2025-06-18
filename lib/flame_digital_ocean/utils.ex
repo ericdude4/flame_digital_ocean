@@ -67,6 +67,8 @@ defmodule FlameDigitalOcean.Utils do
     ufw --force enable
 
     # === 6. Generate FLAME boot script ===
+    ssh-keyscan github.com >> /root/.ssh/known_hosts
+
     cat <<'EOF' > $HOME/start_flame.exs
       #{File.read!(Path.expand("./scripts/start_flame.exs", __DIR__))}
     EOF
