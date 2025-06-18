@@ -13,7 +13,7 @@ flame_parent = System.fetch_env!("FLAME_PARENT") |> Base.decode64!() |> :erlang.
 Mix.install(
   [
     {:flame, flame_parent_vsn},
-    {:flame_digital_ocean, git: "https://github.com/ericdude4/flame_digital_ocean"}
+    {:flame_test, git: "https://github.com/ericdude4/flame_test"}
   ],
   consolidate_protocols: false
 )
