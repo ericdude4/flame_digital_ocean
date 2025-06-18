@@ -12,8 +12,8 @@ flame_parent = System.fetch_env!("FLAME_PARENT") |> Base.decode64!() |> :erlang.
 
 Mix.install(
   [
-    {:flame, flame_parent_vsn},
-    {:flame_test, git: "https://github.com/ericdude4/flame_test.git", branch: "master"}
+    {:flame, "0.5.2"},
+    {:flame_test, git: "git@github.com:ericdude4/flame_test.git", branch: "master"}
   ],
   consolidate_protocols: false
 )
