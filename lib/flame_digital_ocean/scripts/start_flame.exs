@@ -10,10 +10,10 @@ flame_parent = System.fetch_env!("FLAME_PARENT") |> Base.decode64!() |> :erlang.
   ref: parent_ref
 } = flame_parent
 
-Path.wildcard("./flame_deps/flame/_build/dev/lib/*/ebin")
-|> Enum.each(&Code.append_path/1)
+# Path.wildcard("./flame_deps/flame/_build/dev/lib/*/ebin")
+# |> Enum.each(&Code.append_path/1)
 
-Application.ensure_all_started(:flame)
+# Application.ensure_all_started(:flame)
 
 flame_parent_node_name =
   "FLAME_PARENT_NODE_NAME"
