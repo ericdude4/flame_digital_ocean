@@ -7,16 +7,16 @@ flame_parent = System.fetch_env!("FLAME_PARENT") |> Base.decode64!() |> :erlang.
 %{
   pid: parent_pid,
   flame_vsn: flame_parent_vsn,
-  backend_app: backend_app,
-  backend_vsn: backend_vsn,
   ref: parent_ref
 } = flame_parent
 
-# Path.wildcard("./flame_deps/flame/_build/dev/lib/*/ebin")
-# |> Enum.each(&Code.append_path/1)
-
-# Application.ensure_all_started(:flame)
-Mix.install([{:flame, flame_parent_vsn}], consolidate_protocols: false)
+Mix.install(
+  [
+    {:flame, flame_parent_vsn},
+    {:flame_digital_ocean, git: "https://github.com/ericdude4/flame_digital_ocean"}
+  ],
+  consolidate_protocols: false
+)
 
 flame_parent_node_name =
   "FLAME_PARENT_NODE_NAME"
