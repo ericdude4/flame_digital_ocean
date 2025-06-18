@@ -25,6 +25,10 @@ flame_parent_node_name =
 
 Node.connect(flame_parent_node_name)
 
+IO.inspect(Node.list(), label: "Connected Nodes")
+
+FlameTest.simulate_work()
+
 send(parent_pid, {parent_ref, {:remote_up, self()}})
 
 System.no_halt(true)
