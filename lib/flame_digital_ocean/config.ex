@@ -23,7 +23,6 @@ defmodule FlameDigitalOcean.Config do
     :vpc_uuid,
     :with_droplet_agent,
     :boot_timeout,
-    :boot_poll_interval,
     :env,
     :api_key,
     :erlang_cookie,
@@ -50,7 +49,6 @@ defmodule FlameDigitalOcean.Config do
              :vpc_uuid,
              :with_droplet_agent,
              :boot_timeout,
-             :boot_poll_interval,
              :log,
              :host,
              :name_prefix
@@ -72,7 +70,6 @@ defmodule FlameDigitalOcean.Config do
             vpc_uuid: nil,
             with_droplet_agent: false,
             boot_timeout: nil,
-            boot_poll_interval: 1_000,
             env: %{},
             api_key: nil,
             log: true,

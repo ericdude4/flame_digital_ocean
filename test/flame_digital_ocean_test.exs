@@ -4,7 +4,7 @@ defmodule FlameDigitalOceanTest do
 
   describe "remote_boot/1" do
     setup do
-      {:ok, backend_state} = FlameDigitalOcean.init(boot_poll_interval: 0)
+      {:ok, backend_state} = FlameDigitalOcean.init()
 
       {:ok, state: backend_state}
     end

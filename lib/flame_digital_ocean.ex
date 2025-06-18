@@ -21,8 +21,6 @@ defmodule FlameDigitalOcean do
       Utils.with_elapsed_ms(fn ->
         url = "#{state.config.host}/droplets"
 
-        IO.puts(Utils.build_user_data(state.config))
-
         body =
           [
             {"name", state.config.name},
@@ -35,7 +33,7 @@ defmodule FlameDigitalOcean do
             {"ipv6", state.config.ipv6},
             {"monitoring", state.config.monitoring},
             {"tags", state.config.tags},
-            {"user_data", Utils.build_user_data(state.config)},
+            {"user_data", Utils.build_user_data(state)},
             {"volumes", state.config.volumes},
             {"vpc_uuid", state.config.vpc_uuid},
             {"with_droplet_agent", state.config.with_droplet_agent}
@@ -57,28 +55,8 @@ defmodule FlameDigitalOcean do
             resp = Jason.decode(body)
 
             case resp do
-              {:ok, %{"droplet" => %{"id" => _droplet_id, "status" => "active"}}} ->
+              {:ok, %{"droplet" => %{"id" => _droplet_id}}} ->
                 resp
-
-              {:ok, %{"droplet" => %{"id" => droplet_id, "status" => "new"}}} ->
-                # Poll the droplet status until it's active
-                Utils.poll(
-                  fn ->
-                    case HTTPClient.get("#{url}/#{droplet_id}", headers) do
-                      {:ok, %{status_code: 200, body: body}} ->
-                        case Jason.decode(body) do
-                          {:ok, %{"droplet" => %{"id" => ^droplet_id, "status" => "active"}}} =
-                              resp ->
-                            resp
-
-                          {:ok, %{"droplet" => %{"id" => ^droplet_id, "status" => status}}} ->
-                            {:error, "Droplet is not active yet, current status: #{status}"}
-                        end
-                    end
-                  end,
-                  interval: state.config.boot_poll_interval,
-                  timeout: state.config.boot_timeout
-                )
             end
         end
       end)
@@ -87,6 +65,8 @@ defmodule FlameDigitalOcean do
 
     remaining_connect_window = state.config.boot_timeout - req_connect_time
 
+    IO.inspect(parent_ref, label: "Parent Reference")
+
     case resp do
       {:ok, %{"droplet" => %{"id" => droplet_id}}} ->
         new_state = %{state | runner_instance_id: droplet_id}
@@ -94,6 +74,7 @@ defmodule FlameDigitalOcean do
         remote_terminator_pid =
           receive do
             {^parent_ref, {:remote_up, remote_terminator_pid}} ->
+              Logger.info("Connected to FLAME digital ocean machine")
               remote_terminator_pid
           after
             remaining_connect_window ->
