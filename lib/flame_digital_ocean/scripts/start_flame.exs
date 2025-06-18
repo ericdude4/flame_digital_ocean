@@ -13,6 +13,8 @@ flame_parent = System.fetch_env!("FLAME_PARENT") |> Base.decode64!() |> :erlang.
 Mix.install(
   [
     {:flame, "0.5.2"},
+    {:flame_digital_ocean,
+     git: "git@github.com:ericdude4/flame_digital_ocean.git", branch: "master"},
     {:flame_test, git: "git@github.com:ericdude4/flame_test.git", branch: "master"}
   ],
   consolidate_protocols: false
@@ -26,8 +28,6 @@ flame_parent_node_name =
 Node.connect(flame_parent_node_name)
 
 IO.inspect(Node.list(), label: "Connected Nodes")
-
-FlameTest.simulate_work()
 
 send(parent_pid, {parent_ref, {:remote_up, self()}})
 
