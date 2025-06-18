@@ -1,5 +1,7 @@
 File.cd!(System.user_home!())
 
+Logger.configure_backend(:console, format: "[$level] $message\n")
+
 flame_parent = System.fetch_env!("FLAME_PARENT") |> Base.decode64!() |> :erlang.binary_to_term()
 
 %{
