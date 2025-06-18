@@ -47,6 +47,7 @@ defmodule FlameDigitalOcean.Utils do
     export ERLANG_COOKIE="#{config.erlang_cookie}"
     export NODE_NAME="remote@$(curl -s http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address)"
     export DISTRIBUTION_PORT=9100
+    export FLAME_PARENT_NODE_NAME="#{Node.self()}"
     export FLAME_PARENT=#{runner_env["FLAME_PARENT"]}
     export PHX_SERVER=#{runner_env["PHX_SERVER"]}
 
