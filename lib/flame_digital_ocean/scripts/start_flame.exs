@@ -16,6 +16,7 @@ flame_parent = System.fetch_env!("FLAME_PARENT") |> Base.decode64!() |> :erlang.
 # |> Enum.each(&Code.append_path/1)
 
 # Application.ensure_all_started(:flame)
+Mix.install([{:flame, flame_parent_vsn}], consolidate_protocols: false)
 
 flame_parent_node_name =
   "FLAME_PARENT_NODE_NAME"
